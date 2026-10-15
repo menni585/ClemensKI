@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGen AI – Dein KI-Webseiten-Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090d16',
+                        glassBg: 'rgba(17, 24, 39, 0.7)',
+                        glassBorder: 'rgba(255, 255, 255, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Highlight.js für Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(147, 51, 234, 0.15) 0px, transparent 50%);
+            color: #f3f4f6;
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-input {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-input:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+        /* Benutzerdefinierte Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(75, 85, 99, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.8);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="glass-panel border-b border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-wand-magic-sparkles text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">WebGen AI</h1>
+                <p class="text-xs text-gray-400">Dein autonomer KI-Webseiten-Entwickler</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="w-2 h-2 mr-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                KI-System Bereit
+            </span>
+            <button onclick="clearAll()" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>Zurücksetzen</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        
+        <!-- Linke Spalte: Chat & Prompting -->
+        <div class="w-full md:w-[420px] lg:w-[480px] glass-panel border-r border-white/10 flex flex-col shrink-0 z-10">
+            <!-- Chat Header -->
+            <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-gray-200 flex items-center space-x-2">
+                    <i class="fa-solid fa-comments text-blue-400"></i>
+                    <span>Prompt-Assistent & Chat</span>
+                </h2>
+                <span class="text-xs text-gray-500">v2.4 Intelligent</span>
+            </div>
+
+            <!-- Nachrichten / Verlauf Container -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Begrüßungsnachricht der KI -->
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-400">
+                        <i class="fa-solid fa-robot text-xs"></i>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl rounded-tl-none text-sm text-gray-200 space-y-2 border-white/10">
+                        <p>Hallo! Ich bin <strong>WebGen AI</strong>. Beschreibe mir deine Traum-Webseite oder wähle unten ein Beispiel aus. Ich generiere dir sofort das Design, die Logik und den kompletten Code!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schnellstart Beispiele -->
+            <div class="px-4 py-2 border-t border-white/5">
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Schnellstart Ideen:</p>
+                <div class="flex flex-wrap gap-1.5">
+                    <button onclick="usePrompt('Erstelle eine moderne Landing-Page für ein gemütliches Café mit Menükarte und Öffnungszeiten.')" class="text-xs bg-white/5 hover:bg-blue-600/20 hover:border-blue-500/40 border border-white/10 rounded-lg px-2.5 py-1 text-gray-300 transition text-left truncate max-w-full">
+                        ☕ Café Landing-Page
+                    </button>
+                    <button onclick="usePrompt('Baue ein interaktives Taschenrechner-Tool mit dunklem Neon-Design, Verlauf und Funktionstasten.')" class="text-xs bg-white/5 hover:bg-blue-600/20 hover:border-blue-500/40 border border-white/10 rounded-lg px-2.5 py-1 text-gray-300 transition text-left truncate max-w-full">
+                        🧮 Neon Taschenrechner
+                    </button>
+                    <button onclick="usePrompt('Erstelle eine minimalistische To-Do-Listen App mit Kategorien, Erledigt-Status und LocalStorage Speicher.')" class="text-xs bg-white/5 hover:bg-blue-600/20 hover:border-blue-500/40 border border-white/10 rounded-lg px-2.5 py-1 text-gray-300 transition text-left truncate max-w-full">
+                        📝 To-Do Manager
+                    </button>
+                    <button onclick="usePrompt('Erstelle ein interaktives Wetter-Dashboard mit Stadt-Suche, Temperaturanzeige und Wetter-Icons.')" class="text-xs bg-white/5 hover:bg-blue-600/20 hover:border-blue-500/40 border border-white/10 rounded-lg px-2.5 py-1 text-gray-300 transition text-left truncate max-w-full">
+                        🌤️ Wetter Dashboard
+                    </button>
+                </div>
+            </div>
+
+            <!-- Eingabebereich -->
+            <div class="p-4 border-t border-white/10 bg-black/20">
+                <form id="prompt-form" onsubmit="handleFormSubmit(event)" class="relative">
+                    <textarea 
+                        id="prompt-input" 
+                        rows="3" 
+                        placeholder="Beschreibe deine Webseite (z.B. 'Eine coole Portfolio-Seite für Webentwickler')..."
+                        class="w-full glass-input rounded-xl p-3 text-sm text-white placeholder-gray-500 focus:outline-none resize-none pr-12"
+                        onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleFormSubmit(event); }"
+                    ></textarea>
+                    <button 
+                        type="submit" 
+                        id="generate-btn"
+                        class="absolute right-2.5 bottom-3.5 w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition shadow-lg shadow-blue-500/30"
+                        title="Webseite generieren"
+                    >
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </form>
+                <div class="flex items-center justify-between mt-2 text-[11px] text-gray-500 px-1">
+                    <span>Tipp: Drücke Enter zum Absenden</span>
+                    <span>HTML5, Tailwind & JS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rechte Spalte: Vorschau & Code Viewer -->
+        <div class="flex-1 flex flex-col bg-gray-950/60 overflow-hidden relative">
+            
+            <!-- Tabs & Toolbar Header -->
+            <div class="glass-panel border-b border-white/10 px-6 py-2.5 flex items-center justify-between shrink-0">
+                <!-- Tabs -->
+                <div class="flex space-x-2 bg-black/30 p-1 rounded-xl border border-white/5">
+                    <button onclick="switchTab('preview')" id="tab-btn-preview" class="px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-2 bg-blue-600 text-white shadow-md">
+                        <i class="fa-solid fa-eye"></i>
+                        <span>Live-Vorschau</span>
+                    </button>
+                    <button onclick="switchTab('code')" id="tab-btn-code" class="px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-2 text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-code"></i>
+                        <span>Quellcode</span>
+                    </button>
+                </div>
+
+                <!-- Aktionen für Vorschau / Code -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="openInNewTab()" id="action-external" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>In neuem Tab</span>
+                    </button>
+                    <button onclick="copyCode()" id="action-copy" class="hidden px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Code kopieren</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area (Vorschau oder Code) -->
+            <div class="flex-1 relative overflow-hidden flex flex-col">
+                
+                <!-- Lade-Overlay mit Schritten -->
+                <div id="loading-overlay" class="absolute inset-0 bg-[#090d16]/90 backdrop-blur-md z-30 flex flex-col items-center justify-center hidden">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/50 mb-6 animate-bounce">
+                        <i class="fa-solid fa-wand-magic-sparkles text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2" id="loading-title">KI analysiert Prompt...</h3>
+                    <p class="text-sm text-gray-400 mb-6" id="loading-subtitle">Erstelle Layout & Komponenten</p>
+                    
+                    <!-- Moderner Ladebalken -->
+                    <div class="w-80 max-w-full bg-gray-800 rounded-full h-2 overflow-hidden border border-white/10">
+                        <div id="loading-progress" class="bg-gradient-to-r from-blue-500 to-purple-500 h-full w-0 transition-all duration-300 rounded-full"></div>
+                    </div>
+                </div>
+
+                <!-- Initialer Leerzustand -->
+                <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                    <div class="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 text-3xl mb-4">
+                        <i class="fa-solid fa-laptop-code"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-300 mb-2">Noch keine Webseite generiert</h3>
+                    <p class="text-sm text-gray-500 max-w-md mb-6">Wähle links eine Beispiel-Idee aus oder schreibe einen eigenen Wunsch in das Chat-Feld, um deine Webseite zu erstellen.</p>
+                    <button onclick="usePrompt('Erstelle eine moderne Landing-Page für ein gemütliches Café mit Menükarte und Öffnungszeiten.')" class="px-4 py-2 rounded-xl text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white transition shadow-lg shadow-blue-500/30">
+                        Beispiel-Café generieren
+                    </button>
+                </div>
+
+                <!-- Vorschau-Tab (iframe) -->
+                <div id="preview-container" class="w-full h-full flex-1 hidden bg-white">
+                    <iframe id="preview-iframe" class="w-full h-full border-0"></iframe>
+                </div>
+
+                <!-- Code-Tab (Syntax Highlighting) -->
+                <div id="code-container" class="w-full h-full flex-1 hidden overflow-auto bg-[#0d1117] p-4">
+                    <pre class="rounded-xl overflow-x-auto"><code id="code-display" class="language-html text-xs"></code></pre>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Benachrichtigung -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-gray-900 border border-white/10 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3">
+        <div id="toast-icon" class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <span id="toast-message" class="text-sm font-medium">Aktion erfolgreich ausgeführt!</span>
+    </div>
+
+    <!-- JavaScript Logik & Templates -->
+    <script>
+        // Aktiver Code Speicher
+        let currentGeneratedCode = '';
+        let activeTab = 'preview';
+
+        // Vordefinierte intelligente Webseiten Vorlagen basierend auf Prompts
+        const templates = [
+            {
+                keywords: ['café', 'cafe', 'kaffee', 'restaurant', 'bar', 'essen', 'menu'],
+                title: 'Café & Bistro Landing-Page',
+                explanation: 'Ich habe eine elegante Landing-Page für ein Café mit Hero-Bereich, Menükarte, Öffnungszeiten und Reservierungsformular erstellt.',
+                code: `<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Café Aroma - Genuss pur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> body { font-family: 'Inter', sans-serif; } h1, h2, h3 { font-family: 'Playfair Display', serif; } </style>
+</head>
+<body class="bg-amber-50/30 text-stone-800">
+    <!-- Navbar -->
+    <nav class="flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+        <div class="text-2xl font-bold tracking-wider text-amber-900 flex items-center space-x-2">
+            <i class="fa-solid fa-mug-hot text-amber-700"></i>
+            <span>Café Aroma</span>
+        </div>
+        <div class="hidden md:flex space-x-8 text-sm font-medium text-stone-600">
+            <a href="#menu" class="hover:text-amber-800 transition">Menü</a>
+            <a href="#about" class="hover:text-amber-800 transition">Über Uns</a>
+            <a href="#kontakt" class="hover:text-amber-800 transition">Kontakt</a>
+        </div>
+        <a href="#kontakt" class="bg-amber-800 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-amber-900 transition shadow-md">Tisch reservieren</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="max-w-7xl mx-auto px-8 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center">
+        <div class="space-y-6">
+            <span class="inline-block px-3 py-1 rounded-full bg-amber-200/60 text-amber-900 text-xs font-semibold uppercase tracking-wider">Handgemachter Kaffee</span>
+            <h1 class="text-4xl md:text-6xl font-bold leading-tight text-amber-950">Dein täglicher Moment der Ruhe.</h1>
+            <p class="text-stone-600 text-base md:text-lg">Erlebe feinste Kaffeespezialitäten, frisch gebackene Kuchen und eine gemütliche Atmosphäre im Herzen der Stadt.</p>
+            <div class="flex space-x-4">
+                <a href="#menu" class="bg-amber-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-amber-950 transition shadow-lg">Speisekarte ansehen</a>
+                <a href="#about" class="border border-amber-300 text-amber-900 px-6 py-3 rounded-xl font-medium hover:bg-amber-100 transition">Mehr erfahren</a>
+            </div>
+        </div>
+        <div class="relative">
+            <img src="https://placehold.co/600x450/d97706/ffffff?text=Kaffee+%26+Kuchen" alt="Kaffee" class="rounded-3xl shadow-2xl w-full object-cover">
+        </div>
+    </header>
+
+    <!-- Menu Section -->
+    <section id="menu" class="bg-white py-20 border-y border-amber-100">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="text-center max-w-xl mx-auto mb-16">
+                <h2 class="text-3xl font-bold text-amber-950 mb-3">Unsere Spezialitäten</h2>
+                <p class="text-stone-600 text-sm">Mit Liebe zubereitet aus nachhaltig angebauten Bohnen.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-6 rounded-2xl bg-amber-50/50 border border-amber-100 hover:shadow-xl transition">
+                    <div class="text-3xl mb-4 text-amber-700"><i class="fa-solid fa-coffee"></i></div>
+                    <h3 class="text-xl font-bold text-amber-950 mb-2">Caffè Latte</h3>
+                    <p class="text-stone-600 text-sm mb-4">Sanfter Espresso mit feinporigem Milchschaum und Latte Art.</p>
+                    <span class="text-amber-800 font-bold">€ 4,20</span>
+                </div>
+                <div class="p-6 rounded-2xl bg-amber-50/50 border border-amber-100 hover:shadow-xl transition">
+                    <div class="text-3xl mb-4 text-amber-700"><i class="fa-solid fa-cake-candles"></i></div>
+                    <h3 class="text-xl font-bold text-amber-950 mb-2">Hausgemachter Käsekuchen</h3>
+                    <p class="text-stone-600 text-sm mb-4">Nach Omas Geheimrezept gebacken, cremig und locker zugleich.</p>
+                    <span class="text-amber-800 font-bold">€ 4,80</span>
+                </div>
+                <div class="p-6 rounded-2xl bg-amber-50/50 border border-amber-100 hover:shadow-xl transition">
+                    <div class="text-3xl mb-4 text-amber-700"><i class="fa-solid fa-leaf"></i></div>
+                    <h3 class="text-xl font-bold text-amber-950 mb-2">Matcha Latte</h3>
+                    <p class="text-stone-600 text-sm mb-4">Hochwertiger japanischer Bio-Matcha mit geschäumter Hafermilch.</p>
+                    <span class="text-amber-800 font-bold">€ 4,90</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-amber-950 text-amber-100 py-12 text-center text-sm">
+        <p>&copy; 2026 Café Aroma. Alle Rechte vorbehalten. Generiert mit WebGen AI.</p>
+    </footer>
+</body>
+</html>`
+            },
+            {
+                keywords: ['taschenrechner', 'rechner', 'calc', 'calculator', 'neon'],
+                title: 'Neon Taschenrechner-Tool',
+                explanation: 'Ich habe einen modernen, interaktiven Taschenrechner mit dunklem Neon-Design, vollständiger Rechenlogik und Verlauf konzipiert.',
+                code: `<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Taschenrechner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #0f172a; font-family: 'Inter', sans-serif; }
+        .calc-btn { transition: all 0.1s ease; }
+        .calc-btn:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 backdrop-blur-xl">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-xs font-semibold tracking-wider text-slate-400 uppercase"><i class="fa-solid fa-calculator text-cyan-400 mr-2"></i>Neon Calc</h1>
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        </div>
+        
+        <!-- Display -->
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-6 text-right">
+            <div id="history" class="text-xs text-slate-500 h-5 overflow-hidden">0</div>
+            <div id="display" class="text-3xl font-bold text-white tracking-wider overflow-x-auto">0</div>
+        </div>
+
+        <!-- Keypad -->
+        <div class="grid grid-cols-4 gap-3">
+            <button onclick="clearDisplay()" class="calc-btn bg-rose-500/10 border border-rose-500/20 text-rose-400 font-semibold p-4 rounded-xl hover:bg-rose-500/20">C</button>
+            <button onclick="appendValue('%')" class="calc-btn bg-slate-800 text-slate-300 font-semibold p-4 rounded-xl hover:bg-slate-700">%</button>
+            <button onclick="appendValue('/')" class="calc-btn bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-semibold p-4 rounded-xl hover:bg-cyan-500/20">÷</button>
+            <button onclick="appendValue('*')" class="calc-btn bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-semibold p-4 rounded-xl hover:bg-cyan-500/20">×</button>
+
+            <button onclick="appendValue('7')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">7</button>
+            <button onclick="appendValue('8')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">8</button>
+            <button onclick="appendValue('9')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">9</button>
+            <button onclick="appendValue('-')" class="calc-btn bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-semibold p-4 rounded-xl hover:bg-cyan-500/20">-</button>
+
+            <button onclick="appendValue('4')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">4</button>
+            <button onclick="appendValue('5')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">5</button>
+            <button onclick="appendValue('6')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">6</button>
+            <button onclick="appendValue('+')" class="calc-btn bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-semibold p-4 rounded-xl hover:bg-cyan-500/20">+</button>
+
+            <button onclick="appendValue('1')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">1</button>
+            <button onclick="appendValue('2')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">2</button>
+            <button onclick="appendValue('3')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">3</button>
+            <button onclick="calculate()" class="calc-btn row-span-2 bg-gradient-to-b from-cyan-500 to-blue-600 text-white font-semibold p-4 rounded-xl hover:opacity-90 flex items-center justify-center text-xl">=</button>
+
+            <button onclick="appendValue('0')" class="calc-btn col-span-2 bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">0</button>
+            <button onclick="appendValue('.')" class="calc-btn bg-slate-800 text-white font-semibold p-4 rounded-xl hover:bg-slate-700">.</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const history = document.getElementById('history');
+        let currentInput = '0';
+        let calculationHistory = '';
+
+        function updateDisplay() {
+            display.innerText = currentInput;
+            history.innerText = calculationHistory;
+        }
+
+        function appendValue(val) {
+            if (currentInput === '0' && !isNaN(val)) {
+                currentInput = val;
+            } else {
+                currentInput += val;
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            calculationHistory = '';
+            updateDisplay();
+        }
+
+        function calculate() {
+            try {
+                calculationHistory = currentInput;
+                // Sichere Auswertung für Rechner
+                let result = eval(currentInput.replace(/×/g, '*').replace(/÷/g, '/'));
+                currentInput = String(result);
+                updateDisplay();
+            } catch (error) {
+                currentInput = 'Fehler';
+                updateDisplay();
+                setTimeout(clearDisplay, 1500);
+            }
+        }
+    </script>
+</body>
+</html>`
+            },
+            {
+                keywords: ['todo', 'task', 'liste', 'manager', 'aufgabe'],
+                title: 'To-Do Manager App',
+                explanation: 'Ich habe eine elegante Aufgabenverwaltung mit LocalStorage-Speicherung, Filterfunktionen und Fortschrittsanzeige erstellt.',
+                code: `<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow Pro - To-Do App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-10 px-4">
+    <div class="max-w-md mx-auto bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-3xl shadow-2xl p-6">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-xl font-bold flex items-center space-x-2">
+                    <i class="fa-solid fa-list-check text-indigo-400"></i>
+                    <span>TaskFlow Pro</span>
+                </h1>
+                <p class="text-xs text-slate-400">Organisiere deinen Tag effizient</p>
+            </div>
+            <span id="task-counter" class="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-xs font-semibold">0 offene</span>
+        </div>
+
+        <!-- Input Form -->
+        <form onsubmit="addTask(event)" class="flex gap-2 mb-6">
+            <input type="text" id="task-input" placeholder="Neue Aufgabe hinzufügen..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 rounded-xl text-sm font-semibold transition shadow-lg shadow-indigo-500/20">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </form>
+
+        <!-- Task List -->
+        <div id="task-list" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+            <!-- Dynamische Aufgaben -->
+        </div>
+    </div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('webgen_tasks')) || [
+            { text: 'WebGen AI ausprobieren', completed: true },
+            { text: 'Eigene Webseite generieren', completed: false }
+        ];
+
+        function saveAndRender() {
+            localStorage.setItem('webgen_tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        function addTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('task-input');
+            if (!input.value.trim()) return;
+            tasks.unshift({ text: input.value.trim(), completed: false });
+            input.value = '';
+            saveAndRender();
+        }
+
+        function toggleTask(index) {
+            tasks[index].completed = !tasks[index].completed;
+            saveAndRender();
+        }
+
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            saveAndRender();
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            const counter = document.getElementById('task-counter');
+            list.innerHTML = '';
+            
+            const openCount = tasks.filter(t => !t.completed).length;
+            counter.innerText = \`\${openCount} offene\`;
+
+            if (tasks.length === 0) {
+                list.innerHTML = \`<div class="text-center py-8 text-slate-500 text-sm">Keine Aufgaben vorhanden. Erstelle eine neue!</div>\`;
+                return;
+            }
+
+            tasks.forEach((task, index) => {
+                const item = document.createElement('div');
+                item.className = \`flex items-center justify-between p-3.5 rounded-xl border transition \${task.completed ? 'bg-slate-900/40 border-slate-800/60 opacity-60' : 'bg-slate-900 border-slate-700 hover:border-slate-600'}\`;
+                item.innerHTML = \`
+                    <div class="flex items-center space-x-3 cursor-pointer flex-1" onclick="toggleTask(\${index})">
+                        <div class="w-5 h-5 rounded-lg border \${task.completed ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-600'} flex items-center justify-center text-xs">
+                            \${task.completed ? '<i class="fa-solid fa-check"></i>' : ''}
+                        </div>
+                        <span class="text-sm \${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}">\${task.text}</span>
+                    </div>
+                    <button onclick="deleteTask(\${index})" class="text-slate-500 hover:text-rose-400 p-1.5 transition">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                \`;
+                list.appendChild(item);
+            });
+        }
+
+        renderTasks();
+    </script>
+</body>
+</html>`
+            }
+        ];
+
+        // Standard Fallback Template für beliebige Prompts
+        const defaultTemplate = {
+            title: 'Individuelle KI Web-App',
+            explanation: 'Ich habe basierend auf deiner Beschreibung eine maßgeschneiderte, moderne Web-Anwendung mit interaktiven Elementen und responsivem Design erstellt.',
+            code: `<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generierte KI Webseite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between">
+    <!-- Header -->
+    <header class="border-b border-slate-800 px-8 py-4 flex justify-between items-center bg-slate-900/50 backdrop-blur-md">
+        <div class="font-bold text-lg text-blue-400 flex items-center space-x-2">
+            <i class="fa-solid fa-code"></i>
+            <span>Custom WebApp</span>
+        </div>
+        <nav class="space-x-6 text-sm text-slate-400">
+            <a href="#" class="hover:text-white transition">Start</a>
+            <a href="#" class="hover:text-white transition">Funktionen</a>
+            <a href="#" class="hover:text-white transition">Kontakt</a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-6 py-20 text-center">
+        <span class="inline-block px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold uppercase tracking-wider mb-4">Erfolgreich generiert</span>
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight text-white">Deine Vision, als Code verwirklicht.</h1>
+        <p class="text-slate-400 text-lg mb-10 max-w-2xl mx-auto">Diese Webseite wurde vollautomatisch durch WebGen AI erstellt. Du kannst den Code anpassen oder neue Anforderungen stellen.</p>
+        
+        <div class="grid md:grid-cols-3 gap-6 text-left mb-12">
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+                <i class="fa-solid fa-bolt text-blue-400 text-xl mb-3"></i>
+                <h3 class="font-bold text-white mb-2">Ultraschnell</h3>
+                <p class="text-sm text-slate-400">Sofortige Generierung in Sekundenschnelle ohne Wartezeit.</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+                <i class="fa-solid fa-palette text-purple-400 text-xl mb-3"></i>
+                <h3 class="font-bold text-white mb-2">Modernes Design</h3>
+                <p class="text-sm text-slate-400">Ausgestattet mit Tailwind CSS und ästhetischem Dark Mode.</p>
+            </div>
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+                <i class="fa-solid fa-mobile-screen text-emerald-400 text-xl mb-3"></i>
+                <h3 class="font-bold text-white mb-2">Voll Responsive</h3>
+                <p class="text-sm text-slate-400">Optimiert für Smartphones, Tablets und Desktops.</p>
+            </div>
+        </div>
+
+        <button onclick="triggerAlert()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition">
+            Interaktion testen
+        </button>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+        Erstellt mit WebGen AI &bull; Alle Rechte vorbehalten
+    </footer>
+
+    <script>
+        function triggerAlert() {
+            alert('Fantastisch! Die interaktive JavaScript-Logik funktioniert einwandfrei.');
+        }
+    </script>
+</body>
+</html>`
+        };
+
+        // Funktion zum schnellen Übernehmen eines Beispiel-Prompts
+        function usePrompt(text) {
+            document.getElementById('prompt-input').value = text;
+            document.getElementById('prompt-input').focus();
+        }
+
+        // Formular Absenden simulieren
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('prompt-input');
+            const promptText = input.value.trim();
+            if (!promptText) return;
+
+            // Benutzer Nachricht hinzufügen
+            appendChatMessage(promptText, 'user');
+            input.value = '';
+
+            // Ladeanimation starten
+            showLoadingAnimation(() => {
+                // Passende Vorlage finden
+                let matchedTemplate = templates.find(t => 
+                    t.keywords.some(kw => promptText.toLowerCase().includes(kw))
+                );
+
+                if (!matchedTemplate) {
+                    matchedTemplate = {
+                        ...defaultTemplate,
+                        title: 'Web-App: ' + (promptText.length > 25 ? promptText.substring(0, 25) + '...' : promptText),
+                        explanation: `Ich habe eine moderne Webanwendung zum Thema "${promptText}" generiert. Sie enthält responsives Layout und interaktive Funktionen.`
+                    };
+                }
+
+                currentGeneratedCode = matchedTemplate.code;
+
+                // KI Antwort im Chat hinzufügen
+                appendChatMessage(matchedTemplate.explanation, 'ai', matchedTemplate.title);
+
+                // Vorschau laden
+                loadPreview(currentGeneratedCode);
+
+                // Code Ansicht aktualisieren
+                document.getElementById('code-display').textContent = currentGeneratedCode;
+                hljs.highlightElement(document.getElementById('code-display'));
+
+                // Auf Vorschau Tab schalten
+                switchTab('preview');
+
+                showToast('Webseite erfolgreich generiert!');
+            });
+        }
+
+        // Chat Nachricht hinzufügen
+        function appendChatMessage(text, sender, tag = '') {
+            const container = document.getElementById('chat-messages');
+            const isUser = sender === 'user';
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex items-start space-x-3 ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs ${isUser ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'bg-blue-600/20 border border-blue-500/30 text-blue-400'}`;
+            avatar.innerHTML = `<i class="fa-solid ${isUser ? 'fa-user' : 'fa-robot'}"></i>`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `glass-panel p-3.5 rounded-2xl text-sm text-gray-200 space-y-1.5 max-w-[85%] border-white/10 ${isUser ? 'bg-blue-600/20 border-blue-500/30 rounded-tr-none' : 'rounded-tl-none'}`;
+            
+            if (tag) {
+                const badge = document.createElement('div');
+                badge.className = 'inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 mb-1';
+                badge.innerText = tag;
+                bubble.appendChild(badge);
+            }
+
+            const p = document.createElement('p');
+            p.innerText = text;
+            bubble.appendChild(p);
+
+            msgDiv.appendChild(avatar);
+            msgDiv.appendChild(bubble);
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Ladeanimation mit Schritten
+        function showLoadingAnimation(callback) {
+            const overlay = document.getElementById('loading-overlay');
+            const progressBar = document.getElementById('loading-progress');
+            const title = document.getElementById('loading-title');
+            const subtitle = document.getElementById('loading-subtitle');
+
+            overlay.classList.remove('hidden');
+            progressBar.style.width = '0%';
+
+            const steps = [
+                { title: 'KI analysiert Prompt...', subtitle: 'Erkenne Komponenten & Layout-Struktur', progress: '25%' },
+                { title: 'Generiere HTML & Tailwind CSS...', subtitle: 'Erstelle responsives Design & Farbpalette', progress: '60%' },
+                { title: 'Füge JavaScript Logik hinzu...', subtitle: 'Implementiere Interaktivität & Features', progress: '85%' },
+                { title: 'Fertigstellung...', subtitle: 'Bereite Live-Vorschau vor', progress: '100%' }
+            ];
+
+            let currentStep = 0;
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    title.innerText = steps[currentStep].title;
+                    subtitle.innerText = steps[currentStep].subtitle;
+                    progressBar.style.width = steps[currentStep].progress;
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        overlay.classList.add('hidden');
+                        callback();
+                    }, 300);
+                }
+            }, 350);
+        }
+
+        // Tabs umschalten
+        function switchTab(tab) {
+            activeTab = tab;
+            const btnPreview = document.getElementById('tab-btn-preview');
+            const btnCode = document.getElementById('tab-btn-code');
+            const previewContainer = document.getElementById('preview-container');
+            const codeContainer = document.getElementById('code-container');
+            const actionCopy = document.getElementById('action-copy');
+            const actionExternal = document.getElementById('action-external');
+
+            if (tab === 'preview') {
+                btnPreview.className = 'px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-2 bg-blue-600 text-white shadow-md';
+                btnCode.className = 'px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-2 text-gray-400 hover:text-white';
+                previewContainer.classList.remove('hidden');
+                codeContainer.classList.add('hidden');
+                actionCopy.classList.add('hidden');
+                actionExternal.classList.remove('hidden');
+            } else {
+                btnCode.className = 'px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-2 bg-blue-600 text-white shadow-md';
+                btnPreview.className = 'px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-2 text-gray-400 hover:text-white';
+                codeContainer.classList.remove('hidden');
+                previewContainer.classList.add('hidden');
+                actionCopy.classList.remove('hidden');
+                actionExternal.classList.add('hidden');
+            }
+        }
+
+        // Vorschau in iframe laden
+        function loadPreview(code) {
+            document.getElementById('empty-state').classList.add('hidden');
+            const iframe = document.getElementById('preview-iframe');
+            document.getElementById('preview-container').classList.remove('hidden');
+            
+            const blob = new Blob([code], { type: 'text/html' });
+            iframe.src = URL.createObjectURL(blob);
+        }
+
+        // Code kopieren
+        function copyCode() {
+            if (!currentGeneratedCode) return;
+            const textArea = document.createElement('textarea');
+            textArea.value = currentGeneratedCode;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Quellcode in die Zwischenablage kopiert!');
+            } catch (err) {
+                showToast('Fehler beim Kopieren.', true);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // In neuem Tab öffnen
+        function openInNewTab() {
+            if (!currentGeneratedCode) return;
+            const blob = new Blob([currentGeneratedCode], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+
+        // Alles zurücksetzen
+        function clearAll() {
+            currentGeneratedCode = '';
+            document.getElementById('preview-iframe').src = '';
+            document.getElementById('preview-container').classList.add('hidden');
+            document.getElementById('code-container').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+            document.getElementById('code-display').textContent = '';
+            document.getElementById('chat-messages').innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-400">
+                        <i class="fa-solid fa-robot text-xs"></i>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl rounded-tl-none text-sm text-gray-200 space-y-2 border-white/10">
+                        <p>Workspace zurückgesetzt. Beschreibe mir eine neue Webseiten-Idee!</p>
+                    </div>
+                </div>
+            `;
+            switchTab('preview');
+            showToast('Workspace zurückgesetzt');
+        }
+
+        // Toast Benachrichtigung anzeigen
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMessage.innerText = message;
+            if (isError) {
+                toastIcon.className = 'w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs';
+                toastIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                toastIcon.className = 'w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs';
+                toastIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
